@@ -1,0 +1,12 @@
+{
+  "model": "GBTClassifier_Spark",
+  "max_iter": 100,
+  "max_depth": 6,
+  "training_time_seconds": 270.16,
+  "inference_time_seconds": 0.0509,
+  "metrics": {
+    "accuracy": 0.8984174249523867,
+    "f1_score": 0.8604218524048681,
+    "auc_roc": 0.818597913500009
+  }
+}

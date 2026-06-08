@@ -1,0 +1,44 @@
+{
+  "description": "Benchmark Spark GBTClassifier vs XGBoost standalone",
+  "results": [
+    {
+      "fraction": 0.1,
+      "n_rows": 149510,
+      "spark_time": 31.230354070663452,
+      "standalone_time": 0.3195796012878418,
+      "speedup": 0.010232980406329818
+    },
+    {
+      "fraction": 0.25,
+      "n_rows": 374916,
+      "spark_time": 42.066848039627075,
+      "standalone_time": 0.6796352863311768,
+      "speedup": 0.01615607819466195
+    },
+    {
+      "fraction": 0.5,
+      "n_rows": 748199,
+      "spark_time": 61.408339500427246,
+      "standalone_time": 1.3918187618255615,
+      "speedup": 0.022664979596393058
+    },
+    {
+      "fraction": 0.75,
+      "n_rows": 1121242,
+      "spark_time": 92.23866629600525,
+      "standalone_time": 2.0778892040252686,
+      "speedup": 0.022527311890623677
+    },
+    {
+      "fraction": 1.0,
+      "n_rows": 1495609,
+      "spark_time": 111.3549919128418,
+      "standalone_time": 3.0731112957000732,
+      "speedup": 0.027597427317002685
+    }
+  ],
+  "xgboost_total_training_time": 67.10922145843506,
+  "spark_total_training_time": 270.1618585586548,
+  "xgboost_inference_time": 1.5087754726409912,
+  "spark_inference_time": 0.050887107849121094
+}

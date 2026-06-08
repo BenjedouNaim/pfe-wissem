@@ -1,0 +1,143 @@
+\chapter{État de l'art}
+
+\section{Les maladies cardiovasculaires}
+
+\subsection{Définition et épidémiologie}
+
+Les maladies cardiovasculaires (MCV) désignent un groupe de pathologies affectant le cœur et les vaisseaux sanguins. Elles comprennent notamment les cardiopathies coronariennes (angine de poitrine, infarctus du myocarde), les accidents vasculaires cérébraux (AVC), l'insuffisance cardiaque, et les artériopathies périphériques. Selon l'OMS, les MCV causent 17,9 millions de décès annuels \cite{who2023}, dont 85\% sont imputables aux cardiopathies coronariennes et aux AVC.
+
+En termes de fardeau économique, les MCV coûtent aux États-Unis plus de 363 milliards de dollars par an en dépenses de santé et pertes de productivité \cite{virani2021}. La prévention primaire et secondaire, par la détection précoce des facteurs de risque, représente le levier le plus efficace pour réduire ce fardeau.
+
+\subsection{Facteurs de risque identifiés}
+
+La littérature épidémiologique distingue deux catégories de facteurs de risque cardiovasculaire \cite{roth2020} :
+
+\begin{itemize}
+    \item \textbf{Facteurs non modifiables} : âge, sexe masculin, antécédents familiaux de MCV, origine ethnique.
+    \item \textbf{Facteurs modifiables} :
+    \begin{itemize}
+        \item \textit{Comportementaux} : tabagisme, sédentarité, alimentation déséquilibrée, consommation excessive d'alcool.
+        \item \textit{Médicaux} : hypertension artérielle, hypercholestérolémie, diabète de type 2, obésité (IMC $>$ 30).
+        \item \textit{Psychosociaux} : stress chronique, santé mentale dégradée.
+    \end{itemize}
+\end{itemize}
+
+Les scores de risque cardiovasculaire traditionnels, tels que le score de Framingham \cite{wilson1998} ou le score SCORE2 européen \cite{score2}, agrègent ces facteurs de risque en une probabilité d'événement cardiovasculaire à 10 ans. Ces scores ont cependant des limites : ils ont été développés sur des populations spécifiques, ne capturent pas les interactions non linéaires entre variables, et n'exploitent pas pleinement la richesse des enquêtes populationnelles à grande échelle.
+
+\section{Le dataset BRFSS}
+
+\subsection{Présentation de l'enquête}
+
+Le \textit{Behavioral Risk Factor Surveillance System} (BRFSS) est la plus grande enquête téléphonique de santé au monde, coordonnée par les Centers for Disease Control and Prevention (CDC) des États-Unis \cite{cdc_brfss}. Menée annuellement depuis 1984 dans les 50 États américains, elle collecte des données sur les comportements à risque, les conditions chroniques et l'utilisation des services de santé préventifs.
+
+Chaque édition annuelle recueille entre 400\,000 et 500\,000 réponses, avec des questionnaires comprenant des centaines de variables (modules de base, modules optionnels, modules spécifiques aux États). La version poolée 2020--2024 utilisée dans ce projet comptabilise 2\,176\,776 enregistrements bruts avant nettoyage.
+
+\subsection{Variable cible : HeartDiseaseorAttack}
+
+La variable cible utilisée dans ce travail est dérivée de la variable BRFSS \texttt{\_MICHD} (Respondents that have ever reported having coronary heart disease or myocardial infarction). Cette variable composite est définie comme :
+
+$$\texttt{\_MICHD} = 1 \text{ si cardiopathie coronarienne OU infarctus du myocarde}$$
+
+La transformation appliquée est :
+\begin{align*}
+    \texttt{HeartDiseaseorAttack} &= 1 \text{ si } \texttt{\_MICHD} = 1 \text{ (oui)} \\
+    \texttt{HeartDiseaseorAttack} &= 0 \text{ si } \texttt{\_MICHD} = 2 \text{ (non)}
+\end{align*}
+
+Le taux de prévalence résultant est de 10,32\% dans le dataset nettoyé, contre environ 5--6\% si l'on utilisait uniquement la variable d'infarctus du myocarde.
+
+\section{Techniques de Machine Learning pour la prédiction des MCV}
+
+\subsection{Arbres de décision et méthodes d'ensemble}
+
+Les méthodes d'ensemble, notamment les forêts aléatoires (\textit{Random Forest}) et le boosting de gradient, ont démontré des performances supérieures aux modèles linéaires pour la prédiction des MCV sur des données BRFSS.
+
+Nickels et al. \cite{nickels2023} ont appliqué un Random Forest sur le BRFSS 2020, atteignant une AUC de 0,912 avec 18 variables cliniques incluant l'hypertension et l'hypercholestérolémie. Cette performance supérieure aux nôtres s'explique en partie par la disponibilité dans leur jeu de données de variables comme HighBP et HighChol, absentes du fichier poolé ML utilisé dans notre étude.
+
+Mesdaghinia et al. \cite{mesdaghinia2023} ont obtenu une AUC de 0,872 avec XGBoost sur le BRFSS 2019, en incluant 23 variables. Leur approche utilisait la technique SMOTE (\textit{Synthetic Minority Oversampling Technique}) pour gérer le déséquilibre de classes. Notre approche, fondée sur les class weights, présente l'avantage de ne pas créer de données synthétiques et de préserver les distributions originales.
+
+\subsection{XGBoost}
+
+XGBoost (\textit{eXtreme Gradient Boosting}) \cite{chen_xgboost} est un algorithme d'ensemble basé sur le boosting de gradient qui a révolutionné les compétitions de machine learning depuis son introduction en 2016. Son principe repose sur la construction itérative d'arbres de décision, chaque arbre corrigeant les erreurs du précédent par descente de gradient sur une fonction de perte différentiable.
+
+Les avantages d'XGBoost pour notre cas d'usage incluent :
+\begin{itemize}
+    \item Le paramètre \texttt{scale\_pos\_weight} qui permet de pondérer la classe positive sans sur-échantillonnage.
+    \item La régularisation L1/L2 intégrée qui prévient le sur-apprentissage.
+    \item La gestion native des valeurs manquantes par apprentissage de la direction de branchement optimale.
+    \item La parallélisation native du calcul au niveau des arbres et des splits.
+\end{itemize}
+
+\subsection{Réseaux de neurones profonds (DNN)}
+
+Les réseaux de neurones profonds (\textit{Deep Neural Networks}) permettent d'apprendre des représentations hiérarchiques non linéaires des données. Pour les données tabulaires médicales, les architectures à couches entièrement connectées (\textit{fully connected}) constituent généralement le premier choix \cite{shwartz2022}.
+
+Patel et al. \cite{patel2023} ont obtenu un F1-score de 0,834 sur le BRFSS 2021 en combinant un DNN avec SMOTE. Kumar et al. \cite{kumar2023} ont utilisé des réseaux LSTM pour capturer la dimension longitudinale des données BRFSS, atteignant une AUC de 0,891. Dans notre contexte non longitudinal, un DNN feed-forward avec BatchNormalization et Dropout représente une architecture adaptée.
+
+La gestion du déséquilibre dans les DNN se fait par le mécanisme de \textit{class weights} : la fonction de perte (Binary Crossentropy) est pondérée inversement proportionnellement à la fréquence de chaque classe :
+
+$$w_k = \frac{N_{total}}{n_{classes} \times N_k}$$
+
+Dans notre cas : $w_0 = 0,558$ (classe négative) et $w_1 = 4,847$ (classe positive), reflétant un rapport de déséquilibre de 9:1.
+
+\subsection{Optimisation du seuil de classification}
+
+La plupart des études utilisent le seuil par défaut de 0,5 pour la classification binaire. Cette approche est inadaptée en présence de déséquilibre de classes. La courbe Précision-Rappel (PR curve) permet d'identifier le seuil qui maximise le F1-score \cite{davis2006} :
+
+$$F_1 = 2 \cdot \frac{\text{Précision} \times \text{Rappel}}{\text{Précision} + \text{Rappel}}$$
+
+Cette analyse est particulièrement importante en contexte médical, où le compromis entre faux positifs (patients incorrectement alertés) et faux négatifs (patients à risque non détectés) a des implications cliniques directes. Dans notre étude, le seuil optimal identifié est de 0,6713 pour le DNN, contre le seuil naïf de 0,5.
+
+\section{Big Data et Apache Spark pour les données médicales}
+
+\subsection{Apache Spark}
+
+Apache Spark est un framework open-source de traitement distribué de données massives, développé à l'Université de Californie à Berkeley et maintenu par la fondation Apache \cite{zaharia2016}. Son modèle de programmation fondé sur les \textit{Resilient Distributed Datasets} (RDD) et les DataFrames permet de traiter des volumes de données dépassant la mémoire vive d'une seule machine en distribuant le calcul sur un cluster de nœuds.
+
+Les principales caractéristiques qui justifient son utilisation dans ce projet sont :
+\begin{itemize}
+    \item Le traitement en mémoire (\textit{in-memory computing}), offrant des performances 10 à 100 fois supérieures à Hadoop MapReduce pour les workloads itératifs.
+    \item Le support natif du format Parquet, optimisé pour les opérations analytiques colonaires.
+    \item La bibliothèque MLlib, offrant des implémentations distribuées d'algorithmes de ML classiques.
+    \item L'API unifiée (Scala, Java, Python, R) permettant de réutiliser la même logique pour le preprocessing et l'entraînement.
+\end{itemize}
+
+Zhang et al. \cite{zhang2023} ont démontré qu'un pipeline Spark MLlib peut traiter 3 millions d'enregistrements BRFSS en moins de 4 minutes sur un cluster de 8 nœuds, avec un speedup quasi-linéaire en fonction du nombre de nœuds. En mode local (une seule machine), cependant, l'overhead du scheduler Spark et de la sérialisation des partitions peut annuler cet avantage pour les petits et moyens volumes.
+
+\subsection{Spark MLlib --- GBTClassifier}
+
+La classe \texttt{GBTClassifier} de Spark MLlib implémente les arbres de gradient boostés de manière distribuée. Chaque arbre est construit en partitionnant les données sur l'ensemble des nœuds du cluster, permettant de traiter des datasets ne tenant pas en mémoire sur une seule machine. Cependant, la sérialisation des modèles et la synchronisation inter-nœuds introduisent un overhead significatif par rapport à XGBoost en mode local.
+
+\subsection{Comparaison Spark vs. standalone en mode local}
+
+La littérature établit clairement que Spark est avantageux pour les volumes dépassant plusieurs dizaines de millions de lignes sur un vrai cluster. Pour les volumes de l'ordre du million de lignes sur une machine locale, XGBoost avec parallélisation OpenMP offre généralement des temps d'entraînement significativement plus courts \cite{shwartz2022}. Notre benchmark quantifie cet écart sur les données BRFSS spécifiques à ce projet.
+
+\section{Synthèse et positionnement}
+
+\begin{table}[H]
+\centering
+\caption{Synthèse des travaux existants sur la prédiction des MCV avec BRFSS}
+\label{tab:etat_art}
+\begin{tabular}{p{3.5cm}p{1.5cm}p{3cm}p{1.5cm}p{3.5cm}}
+\toprule
+\textbf{Auteurs} & \textbf{Année} & \textbf{Méthode} & \textbf{AUC} & \textbf{Particularités} \\
+\midrule
+Nickels et al. \cite{nickels2023}    & 2023 & Random Forest       & 0,912 & 18 vars dont HighBP/HighChol \\
+Mesdaghinia et al. \cite{mesdaghinia2023} & 2023 & XGBoost + SMOTE & 0,872 & 23 variables, BRFSS 2019 \\
+Patel et al. \cite{patel2023}        & 2023 & DNN + SMOTE         & 0,834 & F1=0,834, BRFSS 2021 \\
+Kumar et al. \cite{kumar2023}        & 2023 & LSTM                & 0,891 & Données longitudinales \\
+Zhang et al. \cite{zhang2023}        & 2023 & Spark MLlib         & ---   & 3M lignes, cluster 8 nœuds \\
+\midrule
+\textbf{Ce travail}                  & 2026 & DNN + XGBoost + Spark & 0,820 & 2,17M lignes, pipeline E2E \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Ce travail se distingue des précédents sur plusieurs points. Il utilise le dataset poolé
+2020--2024, le plus volumineux disponible publiquement sur Kaggle. Il intègre un benchmark
+contrôlé Spark vs. XGBoost standalone dans le même pipeline, ce qu'aucun des travaux
+cités ne fait. Il applique l'optimisation du seuil par courbe Précision-Rappel et délivre
+un tableau de bord interactif. L'AUC obtenue (0,820) est inférieure aux meilleurs résultats
+de la littérature~; cette différence s'explique par l'absence de HighBP et HighChol dans le
+fichier poolé ML utilisé, deux variables qui contribuent fortement au pouvoir discriminant
+dans les études de Nickels et al.\ et Mesdaghinia et al.

@@ -1,0 +1,89 @@
+\chapter{Introduction générale}
+
+\section{Contexte général}
+
+Les maladies cardiovasculaires (MCV) sont la première cause de mortalité dans le monde~:
+selon l'Organisation Mondiale de la Santé, elles causent 17,9 millions de décès par an,
+soit 31~\% de la mortalité mondiale \cite{who2023}.
+Plus de trois quarts de ces décès surviennent dans les pays à revenu faible
+ou intermédiaire, où les programmes de prévention restent insuffisants.
+
+La détection précoce du risque cardiovasculaire est une priorité de santé publique.
+Un dépistage en amont des événements cardiaques permet de concentrer les interventions
+préventives sur les populations les plus exposées et de limiter les hospitalisations
+évitables. Les facteurs de risque modifiables des MCV sont bien documentés dans la
+littérature épidémiologique~: hypertension artérielle, hypercholestérolémie, diabète,
+tabagisme, obésité, sédentarité et consommation excessive d'alcool \cite{roth2020}.
+
+Les techniques de machine learning appliquées aux grandes enquêtes épidémiologiques
+offrent une voie pour exploiter ces facteurs à l'échelle de la population.
+Le \textit{Behavioral Risk Factor Surveillance System} (BRFSS), coordonné par les
+Centers for Disease Control and Prevention (CDC) américains, produit chaque année
+400\,000 à 500\,000 réponses couvrant des centaines de variables comportementales
+et médicales. La version poolée 2020--2024 dépasse les 2 millions d'enregistrements
+et nécessite des outils de traitement distribué pour être exploitée efficacement.
+
+\section{Problématique}
+
+Comment exploiter des données épidémiologiques massives, dépassant les 2 millions d'enregistrements, pour prédire le risque de maladie cardiovasculaire, et comment comparer de façon rigoureuse une approche Deep Learning et une approche de Machine Learning classique sur ce type de données ?
+
+Cette problématique soulève plusieurs défis techniques et méthodologiques :
+
+\begin{enumerate}
+    \item \textbf{Le volume de données :} Le dataset BRFSS 2020--2024 poolé contient 2 176 776 enregistrements, ce qui dépasse les capacités de traitement des outils classiques en mémoire vive. Des outils de traitement distribué comme Apache Spark sont nécessaires pour ingérer, nettoyer et préparer ces données efficacement.
+
+    \item \textbf{Le déséquilibre de classes :} Avec une prévalence de MCV d'environ 10,3\% dans le dataset, les modèles standards tendent à classifier l'ensemble des observations comme négatif pour maximiser l'accuracy. Des techniques spécifiques de gestion du déséquilibre sont nécessaires.
+
+    \item \textbf{La qualité et l'encodage des données :} Le BRFSS utilise des conventions d'encodage non standards (1 = Oui, 2 = Non pour les variables binaires), nécessitant une phase de binarisation rigoureuse avant toute modélisation.
+
+    \item \textbf{La comparaison rigoureuse des modèles :} Comparer un DNN et XGBoost requiert un protocole d'évaluation complet : mêmes données de test, mêmes métriques, optimisation du seuil de classification, et analyse de la capacité de détection de la classe positive.
+
+    \item \textbf{L'apport réel d'Apache Spark :} Quantifier objectivement la valeur ajoutée de Spark en mode local versus une approche standalone nécessite un benchmark contrôlé sur des fractions croissantes du jeu de données.
+\end{enumerate}
+
+\section{Objectifs du projet}
+
+\subsection{Objectif principal}
+
+Concevoir et implémenter un pipeline Big Data end-to-end, capable d'ingérer, prétraiter, modéliser et évaluer les données BRFSS 2020--2024 pour prédire le risque de maladie cardiovasculaire, avec une comparaison quantitative entre XGBoost et un réseau de neurones profond.
+
+\subsection{Objectifs secondaires}
+
+\begin{enumerate}
+    \item \textbf{Traitement distribué :} Démontrer la faisabilité et les performances d'Apache Spark pour le chargement et le prétraitement de données épidémiologiques massives (>2M lignes).
+
+    \item \textbf{Feature engineering avancé :} Construire un ensemble de features discriminantes à partir de 14 variables BRFSS brutes, incluant la création de features dérivées composite (RiskScore, HealthIndex).
+
+    \item \textbf{Modélisation comparative :} Entraîner, optimiser et comparer un DNN (TensorFlow/Keras) et XGBoost sur les mêmes données, avec gestion explicite du déséquilibre de classes et optimisation du seuil de décision.
+
+    \item \textbf{Benchmark de performance :} Évaluer quantitativement le temps d'entraînement de Spark GBTClassifier versus XGBoost standalone sur des fractions croissantes du dataset.
+
+    \item \textbf{Visualisation :} Développer un tableau de bord interactif Streamlit pour présenter les résultats de manière accessible.
+\end{enumerate}
+
+\section{Contributions}
+
+Les principales contributions de ce travail sont :
+
+\begin{itemize}
+    \item Un pipeline de binarisation spécifique au format BRFSS, gérant les encodages non standards (1=Oui/2=Non) et la variable dérivée \texttt{\_MICHD} pour la cible cardiovasculaire.
+    \item Un benchmark contrôlé Spark vs. XGBoost standalone sur 5 fractions de données (10\% à 100\%, soit 149\,510 à 1\,495\,609 lignes).
+    \item Une analyse de l'impact du seuil de décision sur le compromis précision/rappel en présence d'un déséquilibre de classes 9:1.
+    \item Un tableau de bord Streamlit en 3 pages (EDA interactive, Résultats des modèles, Impact Spark) fonctionnant sans infrastructure Big Data.
+\end{itemize}
+
+\section{Organisation du rapport}
+
+Ce mémoire est organisé en six chapitres :
+
+\begin{description}
+    \item[\textbf{Chapitre 2 — État de l'art}] Revue de la littérature sur la prédiction des MCV, les techniques de machine learning sur données médicales déséquilibrées, et les approches Big Data pour les enquêtes épidémiologiques.
+
+    \item[\textbf{Chapitre 3 — Méthodologie}] Description du dataset BRFSS, du pipeline de traitement, des architectures de modèles choisies et du protocole d'évaluation.
+
+    \item[\textbf{Chapitre 4 — Implémentation}] Détails techniques de l'environnement de développement, du code PySpark, de l'architecture DNN et de la configuration XGBoost.
+
+    \item[\textbf{Chapitre 5 — Résultats et Discussion}] Présentation et analyse des résultats expérimentaux : EDA, performances des modèles, benchmark Spark, comparaison avec les critères de succès et avec la littérature.
+
+    \item[\textbf{Chapitre 6 — Conclusion et Perspectives}] Synthèse des apports du travail, limites identifiées et pistes d'amélioration futures.
+\end{description}

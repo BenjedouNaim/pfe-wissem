@@ -1,0 +1,142 @@
+\documentclass[a4paper, 12pt, oneside]{report}
+
+% === Encodage et langue ===
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% === Mise en page ===
+\usepackage{geometry}
+\geometry{left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+\usepackage{setspace}
+\onehalfspacing
+
+% === Graphiques et figures ===
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{positioning, shapes.geometric, arrows.meta, fit, calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% === Tableaux ===
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{colortbl}
+
+% === Mathématiques ===
+\usepackage{amsmath, amssymb, amsthm}
+
+% === Code source ===
+\usepackage{listings}
+\usepackage{xcolor}
+
+% === En-têtes et pieds de page ===
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyhead[R]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% === Références et hyperliens ===
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    citecolor=green!50!black,
+    urlcolor=blue,
+    pdftitle={Analyse de données médicales massives pour la prédiction des MCV},
+    pdfauthor={Naim Benjedou},
+}
+
+% === Bibliographie ===
+\usepackage[backend=biber, style=numeric, sorting=nyt, maxbibnames=99]{biblatex}
+\addbibresource{references.bib}
+
+% === Couleurs personnalisées ===
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.45,0,0.75}
+\definecolor{backcolour}{rgb}{0.96,0.96,0.94}
+\definecolor{primary}{RGB}{31, 73, 125}
+\definecolor{accent}{RGB}{192, 0, 0}
+
+% === Style de listing Python ===
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{codepurple}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codegreen},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    frame=single,
+    rulecolor=\color{gray!40},
+    language=Python
+}
+\lstset{style=pythonstyle}
+
+% === Commandes personnalisées ===
+\newcommand{\metric}[1]{\textbf{\textcolor{primary}{#1}}}
+\newcommand{\todo}[1]{\textcolor{accent}{\textbf{[TODO: #1]}}}
+
+% ============================================================
+\begin{document}
+
+% Page de garde
+\input{chapters/00_page_de_garde}
+
+% Numérotation romaine pour les pages préliminaires
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+% Table des matières
+\tableofcontents
+\newpage
+
+% Liste des figures
+\listoffigures
+\addcontentsline{toc}{chapter}{Liste des figures}
+\newpage
+
+% Liste des tableaux
+\listoftables
+\addcontentsline{toc}{chapter}{Liste des tableaux}
+\newpage
+
+% Numérotation arabe pour le corps du document
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% Chapitres principaux
+\input{chapters/01_introduction}
+\input{chapters/02_etat_de_lart}
+\input{chapters/03_methodologie}
+\input{chapters/04_implementation}
+\input{chapters/05_resultats}
+\input{chapters/06_conclusion}
+
+% Bibliographie
+\printbibliography[heading=bibintoc, title={Références bibliographiques}]
+
+\end{document}

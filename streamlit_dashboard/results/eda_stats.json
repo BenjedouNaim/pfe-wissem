@@ -1,0 +1,22 @@
+{
+  "total_rows": 1760241,
+  "total_columns": 14,
+  "duplicates_removed": 416535,
+  "positive_class_pct": 10.316428261811877,
+  "columns": [
+    "HeartDiseaseorAttack",
+    "BMI",
+    "Smoker",
+    "Stroke",
+    "Diabetes",
+    "PhysActivity",
+    "GenHlth",
+    "MentHlth",
+    "PhysHlth",
+    "DiffWalk",
+    "Sex",
+    "Age",
+    "Education",
+    "HvyAlcoholConsump"
+  ]
+}

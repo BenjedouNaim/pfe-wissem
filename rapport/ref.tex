@@ -1,0 +1,382 @@
+\chapter{Implémentation}
+
+\section{Environnement technique}
+
+\subsection{Infrastructure de calcul}
+
+L'ensemble des expériences a été réalisé sur la plateforme Kaggle Notebooks, qui fournit un environnement de calcul reproductible avec les caractéristiques suivantes :
+
+\begin{table}[H]
+\centering
+\caption{Spécifications de l'environnement d'exécution}
+\label{tab:env}
+\begin{tabular}{ll}
+\toprule
+\textbf{Composant} & \textbf{Spécification} \\
+\midrule
+Plateforme        & Kaggle Notebooks \\
+GPU               & NVIDIA Tesla T4 $\times$ 2 (16 GB VRAM chacun) \\
+RAM               & 29 GB (mode GPU) \\
+Stockage          & 20 GB (espace de travail) \\
+CPU               & 4 cœurs Intel Xeon \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Stack technologique}
+
+\begin{table}[H]
+\centering
+\caption{Stack logicielle du projet}
+\label{tab:stack}
+\begin{tabular}{ll}
+\toprule
+\textbf{Composant} & \textbf{Technologie / Version} \\
+\midrule
+Langage              & Python 3.10 \\
+Traitement distribué & Apache Spark 3.5 (PySpark) \\
+Deep Learning        & TensorFlow 2.15 / Keras \\
+Machine Learning     & XGBoost 2.0, scikit-learn 1.3 \\
+Visualisation        & Matplotlib 3.7, Seaborn 0.12, Plotly 5.15 \\
+Dashboard            & Streamlit 1.28+ \\
+Format de données    & Parquet (PySpark), CSV (pandas) \\
+Stockage modèles     & .keras (DNN), .json (XGBoost), .pkl (scaler) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Structure du projet}
+
+\begin{lstlisting}[language=bash, caption=Structure du projet, label=lst:structure, style=pythonstyle]
+pfe/
+|-- notebook/               # Notebooks Kaggle (Phase 1-6)
+|   |-- 01_setup_and_data_loading.ipynb
+|   |-- 02_preprocessing_and_eda.ipynb
+|   |-- 03_feature_engineering.ipynb
+|   |-- 04_dnn_training.ipynb
+|   |-- 05_xgboost_spark_training.ipynb
+|   +-- 06_evaluation_comparison.ipynb
+|-- streamlit_dashboard/    # Dashboard interactif
+|   |-- app.py              # Page d'accueil
+|   |-- pages/
+|   |   |-- 1_EDA.py
+|   |   |-- 2_Model_Results.py
+|   |   +-- 3_Spark_Impact.py
+|   |-- utils/helpers.py    # Chargement des artifacts
+|   |-- results/            # JSON + CSV + PNG
+|   +-- data/               # brfss_sample.csv
+|-- phases/                 # Documentation phases
+|-- checkpoints/            # Rapports d'execution
++-- rapport/                # Ce rapport LaTeX
+    |-- main.tex
+    |-- references.bib
+    |-- chapters/
+    +-- figures/
+\end{lstlisting}
+
+\section{Phase 1 --- Chargement et nettoyage des données (PySpark)}
+
+\subsection{Initialisation de la session Spark}
+
+\begin{lstlisting}[caption=Initialisation de Spark, label=lst:spark_init]
+from pyspark.sql import SparkSession
+import pyspark.sql.functions as F
+
+spark = SparkSession.builder \
+    .appName("BRFSS_CVD_Prediction") \
+    .master("local[*]") \
+    .config("spark.driver.memory", "8g") \
+    .config("spark.sql.shuffle.partitions", "200") \
+    .getOrCreate()
+
+# Chargement du dataset pooled ML
+df_raw = spark.read.parquet(
+    "/kaggle/input/brfss-2020-2024-dataset/"
+    "brfss_2020_2024_pooled_ml.parquet"
+)
+print(f"Dimensions brutes : {df_raw.count():,} lignes x "
+      f"{len(df_raw.columns)} colonnes")
+# Output : 2,176,776 lignes x 129 colonnes
+\end{lstlisting}
+
+\subsection{Pipeline de binarisation BRFSS}
+
+Le format BRFSS encode les réponses binaires avec 1=Oui et 2=Non, contrairement à la convention 0/1 attendue par les modèles de ML. Une étape de transformation explicite est nécessaire avant toute opération.
+
+\begin{lstlisting}[caption=Binarisation et création de la variable cible, label=lst:binarize]
+# Variable cible : _MICHD (coronary heart disease OR myocardial infarction)
+df = df_raw.withColumn('HeartDiseaseorAttack',
+    F.when(F.col('_MICHD') == 1, 1.0)
+     .when(F.col('_MICHD') == 2, 0.0)
+     .otherwise(None))
+
+# Variables binaires : 1->1, 2->0
+for col_name in ['CVDSTRK3', 'DIFWALK', 'EXERANY2']:
+    new_name = {'CVDSTRK3': 'Stroke', 'DIFWALK': 'DiffWalk',
+                'EXERANY2': 'PhysActivity'}[col_name]
+    df = df.withColumn(new_name,
+        F.when(F.col(col_name) == 1, 1.0)
+         .when(F.col(col_name) == 2, 0.0)
+         .otherwise(None))
+
+# BMI : division par 100
+df = df.withColumn('BMI', F.col('_BMI5') / 100.0)
+
+# Age : tranche 14 (ne sait pas) -> null
+df = df.withColumn('Age',
+    F.when(F.col('_AGEG5YR') == 14, None)
+     .otherwise(F.col('_AGEG5YR').cast('float')))
+\end{lstlisting}
+
+\subsection{Déduplication et statistiques}
+
+\begin{lstlisting}[caption=Déduplication et diagnostic, label=lst:dedup]
+SELECTED_COLS = ['HeartDiseaseorAttack', 'BMI', 'Smoker', 'Stroke',
+                 'Diabetes', 'PhysActivity', 'GenHlth', 'MentHlth',
+                 'PhysHlth', 'DiffWalk', 'Sex', 'Age',
+                 'Education', 'HvyAlcoholConsump']
+
+df_selected = df.select(SELECTED_COLS).dropDuplicates()
+n_after = df_selected.count()  # -> 1,760,241
+
+# Distribution de la cible
+df_selected.groupBy('HeartDiseaseorAttack').count().show()
+# +---------------------+--------+
+# |HeartDiseaseorAttack |count   |
+# +---------------------+--------+
+# |0.0                  |1578452 |
+# |1.0                  |181789  |
+# +---------------------+--------+
+# Prevalence : 181789 / 1760241 = 10.32%
+\end{lstlisting}
+
+\section{Phase 2 --- Feature Engineering (pandas + scikit-learn)}
+
+\subsection{Conversion et imputation}
+
+Pour les phases de feature engineering et d'entraînement des modèles, le DataFrame Spark est converti en DataFrame pandas après filtrage et nettoyage :
+
+\begin{lstlisting}[caption=Imputation des valeurs manquantes, label=lst:imputation]
+import pandas as pd
+import numpy as np
+
+df_pd = df_selected.toPandas()
+
+# Imputation : médiane pour les continus, mode pour les catégoriels
+for col in ['BMI', 'MentHlth', 'PhysHlth']:
+    median_val = df_pd[col].median()
+    df_pd[col].fillna(median_val, inplace=True)
+
+for col in ['Smoker', 'Stroke', 'Diabetes', 'PhysActivity',
+            'DiffWalk', 'Sex', 'GenHlth', 'Age', 'Education',
+            'HvyAlcoholConsump']:
+    mode_val = df_pd[col].mode()[0]
+    df_pd[col].fillna(mode_val, inplace=True)
+\end{lstlisting}
+
+\subsection{Création des features dérivées}
+
+\begin{lstlisting}[caption=Features dérivées RiskScore et HealthIndex, label=lst:derived]
+# RiskScore : somme des facteurs de risque binaires disponibles
+df_pd['RiskScore'] = (df_pd['Smoker'] + df_pd['Diabetes'] +
+                      df_pd['Stroke'] + df_pd['DiffWalk'] +
+                      df_pd['HvyAlcoholConsump'])
+
+# HealthIndex : etat de sante global normalise
+df_pd['HealthIndex'] = (df_pd['GenHlth'] +
+                        df_pd['MentHlth'] / 6.0 +
+                        df_pd['PhysHlth'] / 6.0)
+\end{lstlisting}
+
+\section{Phase 3 --- Entraînement du DNN (TensorFlow/Keras)}
+
+\subsection{Préparation des données}
+
+\begin{lstlisting}[caption=Préparation du jeu de données pour le DNN, label=lst:dnn_prep]
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils.class_weight import compute_class_weight
+
+FEATURES = ['Age', 'GenHlth', 'Stroke', 'DiffWalk', 'Diabetes',
+            'PhysHlth', 'Smoker', 'Sex', 'PhysActivity',
+            'HvyAlcoholConsump', 'BMI', 'Education', 'MentHlth',
+            'RiskScore', 'HealthIndex']
+
+X = df_pd[FEATURES].values
+y = df_pd['HeartDiseaseorAttack'].values
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.30, random_state=42, stratify=y)
+
+# Normalisation
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test  = scaler.transform(X_test)
+
+# Class weights (rapport ~9:1)
+class_weights = compute_class_weight('balanced',
+    classes=np.unique(y_train), y=y_train)
+cw_dict = {0: class_weights[0], 1: class_weights[1]}
+# -> {0: 0.558, 1: 4.847}
+\end{lstlisting}
+
+\subsection{Architecture et entraînement}
+
+\begin{lstlisting}[caption=Construction et entraînement du DNN, label=lst:dnn_train]
+import tensorflow as tf
+from tensorflow.keras import layers, callbacks
+
+def build_dnn(input_dim):
+    inp = tf.keras.Input(shape=(input_dim,))
+    x = layers.Dense(256, activation='relu')(inp)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.3)(x)
+    x = layers.Dense(128, activation='relu')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.Dropout(0.3)(x)
+    x = layers.Dense(64, activation='relu')(x)
+    out = layers.Dense(1, activation='sigmoid')(x)
+    return tf.keras.Model(inp, out)
+
+model = build_dnn(len(FEATURES))
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
+    loss='binary_crossentropy',
+    metrics=['accuracy', tf.keras.metrics.AUC(name='auc')]
+)
+
+cbs = [
+    callbacks.EarlyStopping(monitor='val_auc', patience=5,
+                             restore_best_weights=True, mode='max'),
+    callbacks.ReduceLROnPlateau(monitor='val_auc', factor=0.5,
+                                patience=3, mode='max'),
+    callbacks.ModelCheckpoint('dnn_best_model.h5',
+                               monitor='val_auc', save_best_only=True)
+]
+
+history = model.fit(
+    X_train, y_train,
+    epochs=50, batch_size=1024,
+    validation_split=0.20,
+    class_weight=cw_dict,
+    callbacks=cbs, verbose=1
+)
+# Résultat : 36 epochs (arret a l'epoch 36, meilleur a l'epoch 31)
+# Best val_auc = 0.8205
+\end{lstlisting}
+
+\subsection{Optimisation du seuil de classification}
+
+\begin{lstlisting}[caption=Optimisation du seuil via courbe Précision-Rappel, label=lst:threshold]
+from sklearn.metrics import precision_recall_curve
+
+y_pred_proba = model.predict(X_test).flatten()
+
+# Courbe precision-rappel
+precisions, recalls, thresholds = precision_recall_curve(
+    y_test, y_pred_proba)
+
+# F1 par seuil
+f1_scores = (2 * precisions * recalls /
+             (precisions + recalls + 1e-8))
+
+best_idx   = np.argmax(f1_scores[:-1])
+best_thresh = float(thresholds[best_idx])
+# -> seuil optimal = 0.6713
+
+y_pred_optimal = (y_pred_proba >= best_thresh).astype(int)
+\end{lstlisting}
+
+\section{Phase 4 --- XGBoost et Benchmark Spark}
+
+\subsection{Optimisation des hyperparamètres XGBoost}
+
+\begin{lstlisting}[caption=RandomizedSearchCV pour XGBoost, label=lst:xgb_search]
+from xgboost import XGBClassifier
+from sklearn.model_selection import RandomizedSearchCV
+
+param_dist = {
+    'n_estimators':    [200, 300, 400, 500],
+    'max_depth':       [3, 4, 5, 6, 7],
+    'learning_rate':   [0.01, 0.05, 0.1],
+    'subsample':       [0.7, 0.8, 0.9, 1.0],
+    'colsample_bytree':[0.6, 0.7, 0.8, 0.9],
+    'min_child_weight':[1, 3, 5, 7],
+    'gamma':           [0, 0.1, 0.2, 0.5],
+}
+
+xgb_base = XGBClassifier(
+    scale_pos_weight=len(y_train[y_train==0])/len(y_train[y_train==1]),
+    eval_metric='auc', use_label_encoder=False,
+    tree_method='gpu_hist', device='cuda'
+)
+
+rs = RandomizedSearchCV(
+    xgb_base, param_dist,
+    n_iter=20, cv=3, scoring='roc_auc',
+    n_jobs=-1, random_state=42, verbose=2
+)
+rs.fit(X_train, y_train)
+# Meilleure AUC CV : 0.8211
+# Temps de recherche : 887 secondes
+\end{lstlisting}
+
+\subsection{Benchmark Spark vs. XGBoost}
+
+\begin{lstlisting}[caption=Benchmark de performance par fraction, label=lst:benchmark]
+import time
+from pyspark.ml.classification import GBTClassifier as SparkGBT
+from pyspark.ml.feature import VectorAssembler
+
+fractions = [0.10, 0.25, 0.50, 0.75, 1.00]
+results = []
+
+for frac in fractions:
+    df_frac = df_train_spark.sample(fraction=frac, seed=42)
+    n_rows = df_frac.count()
+
+    # --- Spark GBT ---
+    assembler = VectorAssembler(inputCols=FEATURES,
+                                outputCol='features')
+    df_vec = assembler.transform(df_frac)
+    gbt_spark = SparkGBT(maxIter=100, maxDepth=6,
+                         featuresCol='features',
+                         labelCol='HeartDiseaseorAttack')
+    t0 = time.time()
+    model_spark = gbt_spark.fit(df_vec)
+    spark_time  = time.time() - t0
+
+    # --- XGBoost standalone ---
+    X_frac = X_train[:int(frac * len(X_train))]
+    y_frac = y_train[:int(frac * len(y_train))]
+    xgb_bench = XGBClassifier(**rs.best_params_,
+                              tree_method='hist')
+    t0 = time.time()
+    xgb_bench.fit(X_frac, y_frac)
+    standalone_time = time.time() - t0
+
+    results.append({'fraction': frac, 'n_rows': n_rows,
+                    'spark_time': spark_time,
+                    'standalone_time': standalone_time})
+\end{lstlisting}
+
+\section{Phase 6 --- Dashboard Streamlit}
+
+Le tableau de bord est une application Streamlit statique qui charge les artefacts pré-calculés (JSON, CSV, PNG) depuis le dossier \texttt{results/}. Il ne nécessite aucune inférence ML ni aucun accès à Spark. L'architecture est conçue pour fonctionner sur n'importe quelle machine disposant de Python 3.10+.
+
+\begin{lstlisting}[caption=Lancement du dashboard, language=bash, style=pythonstyle]
+# Installation
+pip install -r streamlit_dashboard/requirements.txt
+
+# Lancement
+cd streamlit_dashboard
+python -m streamlit run app.py --server.port 8501
+\end{lstlisting}
+
+\textbf{Structure du dashboard :}
+\begin{itemize}
+    \item \textbf{Page d'accueil} : 4 KPIs (observations, variables, meilleur AUC, prévalence), description du projet et navigation.
+    \item \textbf{Page EDA} : distribution de la cible, distributions univariées interactives, heatmap de corrélation Pearson, boxplots des outliers, taux de MCV par sous-groupe. Filtres par sexe et tranche d'âge.
+    \item \textbf{Page Résultats Modèles} : KPIs comparatifs, tableau des métriques, bar chart, courbes ROC superposées, matrices de confusion, radar chart, importance XGBoost, courbes d'apprentissage DNN, analyse du seuil, critères PRD.
+    \item \textbf{Page Impact Spark} : KPIs de temps d'entraînement, benchmark scalabilité (échelle log), avantage XGBoost (Nx plus rapide), comparaison AUC, conclusions.
+\end{itemize}

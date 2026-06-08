@@ -1,0 +1,106 @@
+\chapter{Conclusion et Perspectives}
+
+\section{Synthèse des travaux}
+
+Ce mémoire décrit un pipeline Big Data pour la prédiction des maladies cardiovasculaires
+à partir du dataset BRFSS 2020--2024.
+Le pipeline combine Apache Spark pour le traitement des 2,17 millions d'enregistrements
+et deux modèles d'apprentissage automatique, un réseau de neurones profond (DNN)
+et XGBoost, comparés sur un protocole d'évaluation unifié.
+
+\subsection{Contributions principales}
+
+\begin{enumerate}
+    \item \textbf{Pipeline de binarisation BRFSS :} Un pipeline de transformation spécifique au format BRFSS a été développé, gérant les encodages non standards (1=Oui/2=Non), la variable dérivée \texttt{\_MICHD} pour la cible cardiovasculaire composite, et les cas particuliers de chaque variable (valeurs 88, 7, 9 indiquant des données manquantes ou des refus).
+
+    \item \textbf{Traitement distribué à grande échelle :} Apache Spark a permis l'ingestion et le nettoyage de 2,17 millions d'enregistrements Parquet, incluant la suppression de 416\,535 doublons (19,1\% du dataset brut), avec un calcul distribué de statistiques descriptives.
+
+    \item \textbf{Modèles comparatifs :} Deux modèles ont été entraînés et comparés sur le même jeu de test standardisé :
+    \begin{itemize}
+        \item DNN (256-128-64, 36 epochs, seuil optimal 0,6713) : AUC-ROC = 0,8191, Recall = 56,3\%
+        \item XGBoost (400 arbres, max\_depth=5, learning\_rate=0,05) : AUC-ROC = 0,8195, Recall = 79,9\%
+    \end{itemize}
+
+    \item \textbf{Benchmark Spark vs. XGBoost :} Quantification précise de l'avantage de XGBoost standalone (36 à 97 fois plus rapide que Spark GBT en mode local), permettant de déduire que l'apport de Spark dans ce pipeline réside principalement dans le preprocessing distribué et non dans l'entraînement.
+
+    \item \textbf{Dashboard interactif :} Un tableau de bord Streamlit en 3 pages a été développé, permettant la visualisation interactive des résultats sans nécessiter d'infrastructure Big Data.
+\end{enumerate}
+
+\subsection{Réponse à la problématique}
+
+La problématique initiale — comment exploiter des données épidémiologiques massives pour prédire le risque cardiovasculaire en comparant ML classique et Deep Learning — a reçu les réponses suivantes :
+
+\begin{itemize}
+    \item Spark traite 2,17 millions de lignes Parquet en quelques secondes et supprime
+          416\,535 doublons, opération inaccessible à pandas sans segmentation manuelle.
+    \item Les class weights ($w_1 = 4{,}847$ pour le DNN, $\textit{scale\_pos\_weight} = 8{,}69$
+          pour XGBoost) gèrent le déséquilibre sans créer de données synthétiques,
+          produisant un recall de 79,9~\% sur la classe positive avec XGBoost.
+    \item Les deux modèles convergent vers le même AUC (0,820), XGBoost étant
+          2,6 fois plus rapide à entraîner (67~s vs 178~s) et offrant un meilleur
+          recall à seuil identique.
+    \item L'absence de HighBP et HighChol dans le fichier pooled~ML plafonne l'AUC
+          à 0,82, en deçà des cibles de 0,85 (DNN) et 0,87 (XGBoost).
+          Cette contrainte est d'origine documentaire et non algorithmique.
+\end{itemize}
+
+\section{Perspectives d'amélioration}
+
+\subsection{Amélioration des données}
+
+\begin{enumerate}
+    \item \textbf{Intégration des features manquantes :} Utiliser le fichier EDA BRFSS (qui contient HighBP et HighChol) pour les phases de modélisation. L'ajout de ces deux variables permettrait d'estimer une amélioration de 0,03 à 0,05 en AUC, selon la littérature.
+
+    \item \textbf{Données longitudinales :} Exploiter la dimension temporelle du BRFSS (répondants suivis sur plusieurs années) pour construire des modèles séquentiels (LSTM, Transformer temporel) capturant l'évolution des facteurs de risque.
+
+    \item \textbf{Sources de données complémentaires :} Enrichir avec des données cliniques (ECG, biologie), génomiques ou d'imagerie pour une modélisation multimodale.
+\end{enumerate}
+
+\subsection{Amélioration des modèles}
+
+\begin{enumerate}
+    \item \textbf{Explicabilité :} Intégrer SHAP (\textit{SHapley Additive exPlanations}) \cite{lundberg2017} pour l'interprétation des prédictions individuelles, essentielle en contexte médical pour la confiance des cliniciens.
+
+    \item \textbf{Calibration des probabilités :} Appliquer une calibration isotonique ou Platt scaling pour améliorer la qualité des probabilités prédites, permettant une meilleure optimisation du seuil de décision.
+
+    \item \textbf{Ensemble de modèles :} Combiner DNN et XGBoost par stacking ou blending pour potentiellement surpasser les performances individuelles.
+
+    \item \textbf{AutoML :} Utiliser des frameworks comme H2O AutoML ou AutoGluon pour explorer automatiquement un espace d'architectures plus large.
+\end{enumerate}
+
+\subsection{Amélioration de l'infrastructure}
+
+\begin{enumerate}
+    \item \textbf{Cluster Spark distribué :} Évaluer Spark sur un cluster HDFS/YARN réel (8+ nœuds) pour quantifier le speedup en conditions industrielles. À cette échelle, Spark GBT devient compétitif avec XGBoost standalone pour les volumes dépassant 10M de lignes.
+
+    \item \textbf{Déploiement en production :} Créer une API REST (FastAPI ou Flask) exposant le modèle XGBoost comme service de prédiction en temps réel, intégrable dans un système d'information hospitalier.
+
+    \item \textbf{Monitoring MLOps :} Mettre en place un pipeline MLOps (MLflow, DVC) pour le suivi des expériences, la versioning des modèles et la détection du drift de données au fil du temps.
+\end{enumerate}
+
+\subsection{Amélioration du dashboard}
+
+\begin{enumerate}
+    \item \textbf{Inférence en temps réel :} Intégrer le modèle XGBoost dans le dashboard pour permettre des prédictions individuelles à partir d'un formulaire de saisie des facteurs de risque.
+    \item \textbf{Rapport automatisé :} Générer un rapport PDF automatique récapitulant les résultats d'une session d'exploration EDA.
+\end{enumerate}
+
+\section{Conclusion générale}
+
+Ce travail montre qu'un pipeline Big Data pour la prédiction des MCV est réalisable
+avec des outils open-source (PySpark, TensorFlow, XGBoost, Streamlit)
+sur une infrastructure académique à machine unique.
+
+Les performances obtenues, AUC de 0,82 et recall de 79,9~\% pour XGBoost,
+sont cohérentes avec la littérature sur des jeux de données BRFSS de composition
+comparable. L'écart avec les cibles du PRD tient à des contraintes de données,
+pas à des limitations des algorithmes.
+
+Spark est utile pour le preprocessing à grande échelle, pas pour l'entraînement
+en mode local. Sur un cluster distribué, la combinaison Spark (ingestion, nettoyage)
+et XGBoost (entraînement) reste une architecture valide pour des volumes de l'ordre
+de la dizaine de millions de lignes.
+
+Les perspectives les plus directes sont l'intégration de HighBP et HighChol
+depuis le fichier BRFSS EDA, l'ajout d'une couche d'explicabilité SHAP,
+et le déploiement du modèle XGBoost comme API de prédiction.

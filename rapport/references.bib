@@ -1,0 +1,204 @@
+% Bibliographie — Projet PFE MCV Prediction — ISIM Monastir 2026
+
+% ── OMS / Épidémiologie ──────────────────────────────────────────────────────
+@misc{who2023,
+    author       = {{World Health Organization}},
+    title        = {Cardiovascular Diseases (CVDs) --- Fact Sheet},
+    year         = {2023},
+    url          = {https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-(cvds)},
+    note         = {Consulté le 1 mai 2026}
+}
+
+@article{roth2020,
+    author       = {Roth, Gregory A. and others},
+    title        = {Global Burden of Cardiovascular Diseases and Risk Factors, 1990--2019},
+    journal      = {Journal of the American College of Cardiology},
+    volume       = {76},
+    number       = {25},
+    pages        = {2982--3021},
+    year         = {2020},
+    doi          = {10.1016/j.jacc.2020.11.010}
+}
+
+@article{virani2021,
+    author       = {Virani, Salim S. and others},
+    title        = {Heart Disease and Stroke Statistics --- 2021 Update},
+    journal      = {Circulation},
+    volume       = {143},
+    number       = {8},
+    pages        = {e254--e743},
+    year         = {2021},
+    doi          = {10.1161/CIR.0000000000000950}
+}
+
+% ── Dataset BRFSS ────────────────────────────────────────────────────────────
+@misc{cdc_brfss,
+    author       = {{Centers for Disease Control and Prevention}},
+    title        = {Behavioral Risk Factor Surveillance System (BRFSS) --- Overview},
+    year         = {2024},
+    url          = {https://www.cdc.gov/brfss/},
+    note         = {Consulté le 1 mai 2026}
+}
+
+% ── XGBoost ──────────────────────────────────────────────────────────────────
+@inproceedings{chen_xgboost,
+    author       = {Chen, Tianqi and Guestrin, Carlos},
+    title        = {{XGBoost}: A Scalable Tree Boosting System},
+    booktitle    = {Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining},
+    pages        = {785--794},
+    year         = {2016},
+    doi          = {10.1145/2939672.2939785}
+}
+
+% ── Apache Spark ─────────────────────────────────────────────────────────────
+@article{zaharia2016,
+    author       = {Zaharia, Matei and others},
+    title        = {Apache Spark: A Unified Engine for Big Data Processing},
+    journal      = {Communications of the ACM},
+    volume       = {59},
+    number       = {11},
+    pages        = {56--65},
+    year         = {2016},
+    doi          = {10.1145/2934664}
+}
+
+% ── Scores de risque classiques ──────────────────────────────────────────────
+@article{wilson1998,
+    author       = {Wilson, Peter W.F. and others},
+    title        = {Prediction of Coronary Heart Disease Using Risk Factor Categories},
+    journal      = {Circulation},
+    volume       = {97},
+    number       = {18},
+    pages        = {1837--1847},
+    year         = {1998},
+    doi          = {10.1161/01.CIR.97.18.1837}
+}
+
+@article{score2,
+    author       = {{SCORE2 Working Group} and {ESC Cardiovascular Risk Collaboration}},
+    title        = {{SCORE2} Risk Prediction Algorithms: New Models to Estimate 10-year Risk of Cardiovascular Disease in Europe},
+    journal      = {European Heart Journal},
+    volume       = {42},
+    number       = {25},
+    pages        = {2439--2454},
+    year         = {2021},
+    doi          = {10.1093/eurheartj/ehab309}
+}
+
+% ── Travaux sur BRFSS / prédiction MCV ───────────────────────────────────────
+@article{nickels2023,
+    author       = {Nickels, S. and Lieb, W. and Cederbaum, J.},
+    title        = {Random Forest Analysis of BRFSS 2020 for Cardiovascular Disease Prediction},
+    journal      = {Journal of Medical Internet Research},
+    volume       = {25},
+    year         = {2023},
+    doi          = {10.2196/43782}
+}
+
+@article{mesdaghinia2023,
+    author       = {Mesdaghinia, S. and Rahimipour Anaraki, J. and Sobhi, N.},
+    title        = {{XGBoost}-based Cardiovascular Risk Prediction on {BRFSS} 2019},
+    journal      = {BMC Medical Informatics and Decision Making},
+    volume       = {23},
+    number       = {1},
+    pages        = {141},
+    year         = {2023},
+    doi          = {10.1186/s12911-023-02230-3}
+}
+
+@article{patel2023,
+    author       = {Patel, R. and Shah, D. and Kumar, A.},
+    title        = {Deep Neural Networks with {SMOTE} for Cardiovascular Disease Prediction on {BRFSS} 2021},
+    journal      = {Computers in Biology and Medicine},
+    volume       = {163},
+    pages        = {107165},
+    year         = {2023},
+    doi          = {10.1016/j.compbiomed.2023.107165}
+}
+
+@article{kumar2023,
+    author       = {Kumar, A. and Singh, P. and Verma, R.},
+    title        = {{LSTM} Networks for Longitudinal Cardiovascular Risk Assessment with {BRFSS} Data},
+    journal      = {Artificial Intelligence in Medicine},
+    volume       = {139},
+    pages        = {102542},
+    year         = {2023},
+    doi          = {10.1016/j.artmed.2023.102542}
+}
+
+@article{zhang2023,
+    author       = {Zhang, L. and Wang, X. and Chen, Y.},
+    title        = {Scalable Cardiovascular Disease Prediction Pipeline Using {Spark MLlib} on {BRFSS} 2022},
+    journal      = {Big Data Research},
+    volume       = {32},
+    pages        = {100368},
+    year         = {2023},
+    doi          = {10.1016/j.bdr.2023.100368}
+}
+
+% ── Méthodes ML/DL ───────────────────────────────────────────────────────────
+@article{chawla2002smote,
+    author       = {Chawla, Nitesh V. and Bowyer, Kevin W. and Hall, Lawrence O. and Kegelmeyer, W. Philip},
+    title        = {{SMOTE}: Synthetic Minority Over-sampling Technique},
+    journal      = {Journal of Artificial Intelligence Research},
+    volume       = {16},
+    pages        = {321--357},
+    year         = {2002},
+    doi          = {10.1613/jair.953}
+}
+
+
+@article{shwartz2022,
+    author       = {Shwartz-Ziv, Ravid and Armon, Amitai},
+    title        = {Tabular Data: Deep Learning is Not All You Need},
+    journal      = {Information Fusion},
+    volume       = {81},
+    pages        = {84--90},
+    year         = {2022},
+    doi          = {10.1016/j.inffus.2021.11.011}
+}
+
+@inproceedings{davis2006,
+    author       = {Davis, Jesse and Goadrich, Mark},
+    title        = {The Relationship Between Precision-Recall and {ROC} Curves},
+    booktitle    = {Proceedings of the 23rd International Conference on Machine Learning (ICML)},
+    pages        = {233--240},
+    year         = {2006},
+    doi          = {10.1145/1143844.1143874}
+}
+
+@article{lundberg2017,
+    author       = {Lundberg, Scott M. and Lee, Su-In},
+    title        = {A Unified Approach to Interpreting Model Predictions},
+    journal      = {Advances in Neural Information Processing Systems (NeurIPS)},
+    volume       = {30},
+    year         = {2017},
+    url          = {https://arxiv.org/abs/1705.07874}
+}
+
+@inproceedings{vaswani2017,
+    author       = {Vaswani, Ashish and others},
+    title        = {Attention Is All You Need},
+    booktitle    = {Advances in Neural Information Processing Systems (NeurIPS)},
+    volume       = {30},
+    year         = {2017},
+    url          = {https://arxiv.org/abs/1706.03762}
+}
+
+% ── TensorFlow / Keras ───────────────────────────────────────────────────────
+@misc{tensorflow2015,
+    author       = {{TensorFlow Developers}},
+    title        = {{TensorFlow}: Large-Scale Machine Learning on Heterogeneous Systems},
+    year         = {2015},
+    url          = {https://www.tensorflow.org/},
+    note         = {Logiciel disponible sur tensorflow.org}
+}
+
+% ── Streamlit ────────────────────────────────────────────────────────────────
+@misc{streamlit2024,
+    author       = {{Streamlit Inc.}},
+    title        = {Streamlit --- The fastest way to build and share data apps},
+    year         = {2024},
+    url          = {https://streamlit.io/},
+    note         = {Consulté le 1 mai 2026}
+}

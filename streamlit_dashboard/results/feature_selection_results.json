@@ -1,0 +1,189 @@
+{
+  "final_features": [
+    "Age",
+    "GenHlth",
+    "Stroke",
+    "DiffWalk",
+    "Diabetes",
+    "PhysHlth",
+    "Smoker",
+    "Sex",
+    "PhysActivity",
+    "HvyAlcoholConsump",
+    "BMI",
+    "Education",
+    "MentHlth",
+    "RiskScore",
+    "HealthIndex"
+  ],
+  "n_features": 15,
+  "derived_features": [
+    "RiskScore",
+    "HealthIndex"
+  ],
+  "riskscore_components": [
+    "Smoker",
+    "Diabetes",
+    "Stroke",
+    "DiffWalk",
+    "HvyAlcoholConsump"
+  ],
+  "riskscore_missing_from_prd": [
+    "HighBP",
+    "HighChol"
+  ],
+  "feature_importance_gini": [
+    {
+      "Feature": "Age",
+      "Importance_Gini": 0.34062094522605363
+    },
+    {
+      "Feature": "GenHlth",
+      "Importance_Gini": 0.20328572028713757
+    },
+    {
+      "Feature": "Stroke",
+      "Importance_Gini": 0.16129691248710928
+    },
+    {
+      "Feature": "Diabetes",
+      "Importance_Gini": 0.06809309469729331
+    },
+    {
+      "Feature": "DiffWalk",
+      "Importance_Gini": 0.06700789621414821
+    },
+    {
+      "Feature": "Sex",
+      "Importance_Gini": 0.05730157312349822
+    },
+    {
+      "Feature": "PhysHlth",
+      "Importance_Gini": 0.032560683918654874
+    },
+    {
+      "Feature": "Smoker",
+      "Importance_Gini": 0.018752498278091848
+    },
+    {
+      "Feature": "BMI",
+      "Importance_Gini": 0.018631990245968573
+    },
+    {
+      "Feature": "MentHlth",
+      "Importance_Gini": 0.014190991130692526
+    },
+    {
+      "Feature": "Education",
+      "Importance_Gini": 0.010212673374021855
+    },
+    {
+      "Feature": "HvyAlcoholConsump",
+      "Importance_Gini": 0.004541208957428708
+    },
+    {
+      "Feature": "PhysActivity",
+      "Importance_Gini": 0.0035038120599012834
+    }
+  ],
+  "chi2_results": [
+    {
+      "Variable": "Age",
+      "Chi2": 13570.710269338899,
+      "p_value": 0.0,
+      "Cramers_V": 0.2605601094301374,
+      "Significant": "yes"
+    },
+    {
+      "Variable": "GenHlth",
+      "Chi2": 10108.056393727933,
+      "p_value": 0.0,
+      "Cramers_V": 0.22487463259526447,
+      "Significant": "yes"
+    },
+    {
+      "Variable": "Stroke",
+      "Chi2": 7082.174165920752,
+      "p_value": 0.0,
+      "Cramers_V": 0.18823047582243327,
+      "Significant": "yes"
+    },
+    {
+      "Variable": "DiffWalk",
+      "Chi2": 6668.8707312310335,
+      "p_value": 0.0,
+      "Cramers_V": 0.18265551444413336,
+      "Significant": "yes"
+    },
+    {
+      "Variable": "Diabetes",
+      "Chi2": 5397.967682705283,
+      "p_value": 0.0,
+      "Cramers_V": 0.16433186298400507,
+      "Significant": "yes"
+    },
+    {
+      "Variable": "Smoker",
+      "Chi2": 1853.9507559713938,
+      "p_value": 0.0,
+      "Cramers_V": 0.09630653015552633,
+      "Significant": "yes"
+    },
+    {
+      "Variable": "PhysActivity",
+      "Chi2": 1282.1556417956765,
+      "p_value": 8.532406481597006e-281,
+      "Cramers_V": 0.0800897637424529,
+      "Significant": "yes"
+    },
+    {
+      "Variable": "Sex",
+      "Chi2": 1041.937727705803,
+      "p_value": 1.3762601851605487e-228,
+      "Cramers_V": 0.0721983912482845,
+      "Significant": "yes"
+    },
+    {
+      "Variable": "HvyAlcoholConsump",
+      "Chi2": 1014.2644557666599,
+      "p_value": 1.4246531971187368e-222,
+      "Cramers_V": 0.07123316510283126,
+      "Significant": "yes"
+    },
+    {
+      "Variable": "Education",
+      "Chi2": 560.4852650114393,
+      "p_value": 6.952783353698818e-119,
+      "Cramers_V": 0.052952776727311954,
+      "Significant": "yes"
+    }
+  ],
+  "pca_components_95pct": 10,
+  "pca_explained_variance": [
+    0.19722759731045145,
+    0.10764917343051,
+    0.09255685640884154,
+    0.08209222666371793,
+    0.07755039443628063,
+    0.07040633279828075,
+    0.06750140733738032,
+    0.06348421681347878,
+    0.0596714725263606,
+    0.05660052858532848
+  ],
+  "pca_features_used": [
+    "BMI",
+    "Smoker",
+    "Stroke",
+    "Diabetes",
+    "PhysActivity",
+    "GenHlth",
+    "MentHlth",
+    "PhysHlth",
+    "DiffWalk",
+    "Sex",
+    "Age",
+    "Education",
+    "HvyAlcoholConsump"
+  ]
+}
