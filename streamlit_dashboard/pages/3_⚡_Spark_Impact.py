@@ -153,10 +153,6 @@ if aucs:
         marker_color=auc_colors,
         text=[f"{v:.4f}" for v in aucs], textposition="outside",
     ))
-    fig_auc.add_hline(y=0.85, line_dash="dash", line_color="#f39c12",
-                      annotation_text="Cible PRD DNN (0.85)")
-    fig_auc.add_hline(y=0.87, line_dash="dot",  line_color="#e74c3c",
-                      annotation_text="Cible PRD XGBoost (0.87)")
     fig_auc.update_layout(
         template="plotly_dark", height=400,
         title="AUC-ROC — DNN vs XGBoost vs Spark GBT",

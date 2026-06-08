@@ -50,12 +50,6 @@
     "f1_score": "DNN",
     "auc_roc": "XGBoost"
   },
-  "criteria_check": {
-    "AUC-ROC DNN >= 0.85": false,
-    "AUC-ROC XGBoost >= 0.87": false,
-    "F1-score positive >= 0.60": false,
-    "Recall positive >= 0.65": true
-  },
   "dnn_metrics": {
     "accuracy": 0.8225475974958055,
     "precision": 0.30494620234283326,

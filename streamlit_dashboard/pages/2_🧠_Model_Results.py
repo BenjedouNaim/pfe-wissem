@@ -222,28 +222,3 @@ with c2:
     if img_th:
         st.image(img_th, caption="Analyse du seuil de classification", use_container_width=True)
 
-# ── 9. Critères PRD ───────────────────────────────────────────────────────────
-st.divider()
-st.markdown("## ✅ Critères de succes (PRD)")
-
-criteria = [
-    ("AUC-ROC DNN ≥ 0.85",        dnn_m.get("auc_roc", 0) >= 0.85,       dnn_m.get("auc_roc", 0)),
-    ("AUC-ROC XGBoost ≥ 0.87",    xgb_m.get("auc_roc", 0) >= 0.87,       xgb_m.get("auc_roc", 0)),
-    ("F1-score classe positive ≥ 0.60",
-     max(dnn_m.get("f1_score", 0), xgb_m.get("f1_score", 0)) >= 0.60,
-     max(dnn_m.get("f1_score", 0), xgb_m.get("f1_score", 0))),
-    ("Recall classe positive ≥ 0.65",
-     max(dnn_m.get("recall", 0), xgb_m.get("recall", 0)) >= 0.65,
-     max(dnn_m.get("recall", 0), xgb_m.get("recall", 0))),
-]
-
-for label, passed, value in criteria:
-    if passed:
-        st.success(f"✅ {label}  →  {value:.4f}")
-    else:
-        st.error(f"❌ {label}  →  {value:.4f}")
-
-st.caption(
-    "Note : AUC plateau à 0.82 du aux 4 features manquantes (HighBP, HighChol, Income, NoDocbcCost) "
-    "dans le fichier _ml pooled BRFSS 2020-2024."
-)

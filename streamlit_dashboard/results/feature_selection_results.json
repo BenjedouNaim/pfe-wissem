@@ -28,7 +28,7 @@
     "DiffWalk",
     "HvyAlcoholConsump"
   ],
-  "riskscore_missing_from_prd": [
+  "riskscore_missing_factors": [
     "HighBP",
     "HighChol"
   ],
