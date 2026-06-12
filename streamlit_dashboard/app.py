@@ -92,6 +92,7 @@ Utilisez le **menu latéral** pour naviguer :
 1. 📊 **EDA** — Exploration interactive des données
 2. 🧠 **Resultats Modeles** — DNN vs XGBoost
 3. ⚡ **Impact Spark** — Benchmark distribué
+4. 🔮 **Prediction** — Tester les modèles sur un profil patient
 """)
 
 st.divider()
